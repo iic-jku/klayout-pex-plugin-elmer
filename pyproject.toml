@@ -34,6 +34,8 @@ klayout-pex-plugin-gmsh = { path = "../klayout-pex-plugin-gmsh", develop = true 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
+allure-pytest = ">=2.13.5"
+coverage = ">=7.6.8"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
