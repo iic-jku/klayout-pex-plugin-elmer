@@ -1,6 +1,6 @@
 [project]
 name = "klayout-pex-plugin-elmer"
-version = "0.1.0"
+version = "0.1.1"
 description = "Elmer FEM electrostatic input from KLayout-PEX PEX25D scenes: capacitance matrices by FEM"
 authors = [{ name = "Martin Köhler", email = "info@martinjankoehler.com" }]
 license = "GPL-3.0-or-later"
@@ -14,8 +14,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
 ]
 dependencies = [
-    # plugin API v1 is provisional: stay within one klayout-pex minor release
-    "klayout-pex>=0.6.2,<0.7",
+    "klayout-pex>=0.6.2,<1",
     "klayout-pex-plugin-gmsh>=0.1,<0.2",
 ]
 
