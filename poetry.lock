@@ -817,7 +817,7 @@ rich-argparse = ">=1.6.0"
 
 [[package]]
 name = "klayout-pex-plugin-gmsh"
-version = "0.1.0"
+version = "0.1.1"
 description = "gmsh volume meshes of KLayout-PEX PEX25D scenes, for FEM solvers"
 optional = false
 python-versions = ">=3.12,<4.0"
@@ -827,7 +827,7 @@ develop = true
 
 [package.dependencies]
 gmsh = ">=4.12"
-klayout-pex = ">=0.6.2,<0.7"
+klayout-pex = ">=0.6.2,<1"
 
 [package.source]
 type = "directory"
@@ -1334,4 +1334,4 @@ test = ["pytest", "ruff"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "2a73d9c169ff8873c20306fb6836c2e1ae5f816009c7cceffcd58fadc34dddb4"
+content-hash = "951da4b30dbe4978afa75c10682f624e19434394374261205a7e9cb5fe9f88c7"
