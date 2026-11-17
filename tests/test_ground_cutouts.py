@@ -67,7 +67,8 @@ def scene(floating: bool = False, reference: bool = False) -> Any:
 
 def export(scene: Any, directory: Path) -> List[str]:
     return pex25d.export_with_backend(ElmerSceneExporter(), scene, 'elmer', str(directory),
-                                      options={'mesh_size_edge_um': .2, 'mesh_size_max_um': 2.0})
+                                      options={'mesh_size_edge_um': .2, 'mesh_size_max_um': 2.0,
+                                               'linear_tol': 1e-12})
 
 
 @pytest.mark.parametrize('capabilities', [None, Ellipsis, frozenset(),
@@ -141,10 +142,17 @@ def test_actual_solver_matches_explicit_finite_reference_frame(tmp_path: Path, f
     for rows in results:
         assert rows[0][1] > 0 and rows[1][0] > 0
         assert rows[0][1] == pytest.approx(rows[1][0], rel=1e-6, abs=0)
+        # Elmer's lumped diagonals are coupling to exterior ground. With the
+        # zero-charge boundary and both terminals included, they must be zero.
+        # Check charge balance to 1e-10 of mutual coupling. The test requests a
+        # 1e-12 solver residual because integrated charges accumulate residuals.
+        zero_tolerance = rows[0][1] * 1e-10
+        assert rows[0][0] == pytest.approx(0, rel=0, abs=zero_tolerance)
+        assert rows[1][1] == pytest.approx(0, rel=0, abs=zero_tolerance)
     # The two geometry descriptions represent the same finite body and opening.
-    # Allow only small finite-mesh differences, not a changed electrical model.
-    for actual, expected in zip(results[0], results[1]):
-        assert actual == pytest.approx(expected, rel=2e-3, abs=0)
+    # Keep the physical mutual-capacitance comparison purely relative.
+    for i in range(2):
+        assert results[0][i][1-i] == pytest.approx(results[1][i][1-i], rel=2e-3, abs=0)
 
 
 def test_capabilities_are_available_without_constructing_exporter():
