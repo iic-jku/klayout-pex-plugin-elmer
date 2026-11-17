@@ -46,7 +46,7 @@ defaults:
 
 jobs:
   test:
-    name: ${{ github.event_name == 'pull_request' && 'Candidate Gmsh' || 'Published dependencies' }} ${{ matrix.os }}-py${{ matrix.python-version }}
+    name: ${{ matrix.os }}-py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -71,17 +71,6 @@ jobs:
     - uses: actions/checkout@v7
       with:
         path: klayout-pex-plugin-elmer
-
-    # PR checks use the released core with the reviewed Gmsh source candidate.
-    # Remove this path after Gmsh 0.2.0 is published and the Poetry lock is refreshed.
-    - name: Check out pinned Gmsh source for PR compatibility tests
-      if: github.event_name == 'pull_request'
-      uses: actions/checkout@v7
-      with:
-        repository: iic-jku/klayout-pex-plugin-gmsh
-        ref: f720ebdb329575b30f8381e967147b2b08b88a86
-        path: output_gmsh_source
-        persist-credentials: false
 
     - name: "Install Elmer FEM"
       if: runner.os == 'Linux'
@@ -117,25 +106,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install --yes libgl1 libglu1-mesa libgomp1 libxcursor1 libxft2 libxinerama1 libxrender1
 
-    - name: Install released core and candidate Gmsh for PR tests
-      if: github.event_name == 'pull_request'
-      run: |
-        python -m pip install 'klayout-pex==0.10.0' 'pytest>=8,<9' 'allure-pytest>=2.13.5'
-        python -m pip install ../output_gmsh_source .
-        python -m pip check
-
-    - name: Run candidate Gmsh compatibility tests
-      if: github.event_name == 'pull_request'
-      run: python -m pytest --color no -rA
-
     - name: Install published release dependencies
-      if: github.event_name != 'pull_request'
       run: |
         poetry check --lock
         poetry install --no-interaction
 
     - name: Run release dependency tests
-      if: github.event_name != 'pull_request'
       run: poetry run pytest --color no -rA
 
   build:
