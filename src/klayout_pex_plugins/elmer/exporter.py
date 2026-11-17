@@ -41,11 +41,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
-from typing import TYPE_CHECKING, Any, ClassVar, List, Mapping, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, FrozenSet, List, Mapping, Optional
 
 from klayout_pex.log import info
-from klayout_pex.plugin_api.v1 import PEX25DSceneExporter
-from klayout_pex_plugins.gmsh import (LENGTH_UNIT_M, GmshMeshOptions, MeshResult,
+from klayout_pex.plugin_api.v1 import PEX25DSceneExporter, SceneCapability, require_scene_capabilities
+from klayout_pex_plugins.gmsh import (LENGTH_UNIT_M, GmshMeshOptions, GmshSceneExporter, MeshResult,
                                       parse_options, write_mesh)
 
 if TYPE_CHECKING:
@@ -86,6 +86,19 @@ class ElmerSceneExporter(PEX25DSceneExporter):
     name: ClassVar[str] = 'elmer'
     default_prefix: ClassVar[str] = ''
 
+    @classmethod
+    def supported_capabilities(cls) -> FrozenSet[SceneCapability]:
+        # An older installed mesh backend must not silently discard cutouts or
+        # collapse distinct electrical bodies. Opt in only to its typed promises.
+        declaration = getattr(GmshSceneExporter, 'supported_capabilities', None)
+        if not callable(declaration):
+            return frozenset()
+        capabilities = declaration()
+        if not isinstance(capabilities, frozenset) or any(
+                not isinstance(capability, SceneCapability) for capability in capabilities):
+            return frozenset()
+        return frozenset({SceneCapability.GROUND_CUTOUTS, SceneCapability.ELECTRICAL_IDENTITY}) & capabilities
+
     def export(self,
                scene: PEX25DScene,
                *,
@@ -95,6 +108,7 @@ class ElmerSceneExporter(PEX25DSceneExporter):
         """Return the case first, then the mesh and the JSON naming its groups."""
         settings = parse_options(ElmerExporterOptions, options, self.name)
         prefix = prefix or self.default_prefix
+        require_scene_capabilities(self, scene, self.name)
         mesh = write_mesh(scene, settings, output_dir_path, prefix)
 
         sif_path = os.path.join(output_dir_path, f"{prefix}case.sif")

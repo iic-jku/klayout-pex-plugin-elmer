@@ -1,6 +1,6 @@
 [project]
 name = "klayout-pex-plugin-elmer"
-version = "0.1.1"
+version = "0.2.0"
 description = "Elmer FEM electrostatic input from KLayout-PEX PEX25D scenes: capacitance matrices by FEM"
 authors = [{ name = "Martin Köhler", email = "info@martinjankoehler.com" }]
 license = "GPL-3.0-or-later"
@@ -14,8 +14,8 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
 ]
 dependencies = [
-    "klayout-pex>=0.6.2,<1",
-    "klayout-pex-plugin-gmsh>=0.1,<0.2",
+    "klayout-pex>=0.10.0,<1",
+    "klayout-pex-plugin-gmsh>=0.2.0,<0.3",
 ]
 
 [project.urls]
@@ -26,10 +26,6 @@ elmer = "klayout_pex_plugins.elmer:create_exporter"
 
 [tool.poetry]
 packages = [{ include = "klayout_pex_plugins/elmer", from = "src" }]
-
-[tool.poetry.dependencies]
-# Until klayout-pex-plugin-gmsh is on PyPI: the checkout next to this one
-klayout-pex-plugin-gmsh = { path = "../klayout-pex-plugin-gmsh", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"

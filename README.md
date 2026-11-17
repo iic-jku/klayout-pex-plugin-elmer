@@ -20,6 +20,21 @@ cd case && ElmerGrid 14 2 mesh.msh -autoclean && ElmerSolver case.sif
   - body *i* is the group with tag *i* in `mesh.json`
 - **IIC-OSIC-TOOLS doesn't include Elmer.**
 
+## Ground openings and electrical identity
+
+Ground openings, retained ground islands and their coatings follow the selected
+`PEX25D` scene. The reference net identifies the terminal independently of the
+ground profile name. Floating bodies remain separate even when their names match
+connected nets; an optional `body_names.json` records disambiguated solver labels.
+
+These features require a Gmsh backend that explicitly supports both ground cutouts
+and electrical identity. An older or incomplete backend is rejected before files
+are written.
+
+Scenes requiring capacitance accounting are rejected before output. Ground
+openings and electrical ownership alone do not implement exclusion masks, charge
+groups or filtered capacitance results.
+
 ## Options
 
 The mesh options of klayout-pex-plugin-gmsh, plus:
@@ -30,14 +45,19 @@ The mesh options of klayout-pex-plugin-gmsh, plus:
 | `linear_tol` | 1e-10 | Relative residual of the linear solver (BiCGStabl, ILU1) |
 | `linear_max_iterations` | 1000 | |
 
-Pass them with `pex25d export --option NAME=VALUE` (klayout-pex 0.6.3 or later) or `options={...}` in Python.
+Pass them with `pex25d export --option NAME=VALUE` or `options={...}` in Python.
 
 Elements are linear. On the same mesh, the matrix matches Palace with `order` 1.
+
+## Requirements
+
+- `klayout-pex>=0.10.0,<1` (plugin API `v1` is provisional)
+- `klayout-pex-plugin-gmsh>=0.2.0,<0.3`
 
 ## Development
 
 ```bash
-poetry install    # uses ../klayout-pex-plugin-gmsh until it is on PyPI
+poetry install
 poetry run pytest # runs ElmerGrid and ElmerSolver too, if they are on PATH
 ```
 
