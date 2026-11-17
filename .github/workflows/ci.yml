@@ -46,7 +46,7 @@ defaults:
 
 jobs:
   test:
-    name: ${{ github.event_name == 'pull_request' && 'Source compatibility' || 'Published dependencies' }} ${{ matrix.os }}-py${{ matrix.python-version }}
+    name: ${{ github.event_name == 'pull_request' && 'Candidate Gmsh' || 'Published dependencies' }} ${{ matrix.os }}-py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -72,23 +72,16 @@ jobs:
       with:
         path: klayout-pex-plugin-elmer
 
-    # PR checks exercise the unreleased APIs without relabelling source versions.
-    # Remove this path after core/Gmsh releases and the Poetry lock refresh.
-    - name: Check out pinned core source for PR compatibility tests
-      if: github.event_name == 'pull_request'
-      uses: actions/checkout@v7
-      with:
-        repository: iic-jku/klayout-pex
-        ref: 8531325df71c5e5d62d376ca15a13a01ef5aa807
-        path: output_core_source
-
+    # PR checks use the released core with the reviewed Gmsh source candidate.
+    # Remove this path after Gmsh 0.2.0 is published and the Poetry lock is refreshed.
     - name: Check out pinned Gmsh source for PR compatibility tests
       if: github.event_name == 'pull_request'
       uses: actions/checkout@v7
       with:
         repository: iic-jku/klayout-pex-plugin-gmsh
-        ref: 338a85ff8f1623d8f2d3cd33ca9a177521af4667
+        ref: f720ebdb329575b30f8381e967147b2b08b88a86
         path: output_gmsh_source
+        persist-credentials: false
 
     - name: "Install Elmer FEM"
       if: runner.os == 'Linux'
@@ -124,32 +117,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install --yes libgl1 libglu1-mesa libgomp1 libxcursor1 libxft2 libxinerama1 libxrender1
 
-    - name: Install pinned source and PR test dependencies
+    - name: Install released core and candidate Gmsh for PR tests
       if: github.event_name == 'pull_request'
       run: |
-        python -m pip install 'grpcio-tools>=1.81,<1.82' 'gmsh>=4.12' 'pytest>=8,<9' 'allure-pytest>=2.13.5'
-        # Technology generation imports core runtime dependencies, including KLayout.
-        python - <<'PY'
-        import pathlib
-        import subprocess
-        import sys
-        import tomllib
+        python -m pip install 'klayout-pex==0.10.0' 'pytest>=8,<9' 'allure-pytest>=2.13.5'
+        python -m pip install ../output_gmsh_source .
+        python -m pip check
 
-        project = pathlib.Path('../output_core_source/pyproject.toml')
-        dependencies = tomllib.loads(project.read_text(encoding='utf-8'))['project']['dependencies']
-        subprocess.run([sys.executable, '-m', 'pip', 'install', *dependencies], check=True)
-        PY
-        python -m grpc_tools.protoc \
-          --proto_path=../output_core_source/protos \
-          --python_out=../output_core_source/klayout_pex_protobuf \
-          $(find ../output_core_source/protos -name '*.proto')
-        python ../output_core_source/scripts/gen_tech_pb ../output_core_source/klayout_pex_protobuf
-        python -m pip install ../output_core_source
-        # Keep each source's actual version. Published dependency resolution is
-        # checked separately once the selected minimum releases are available.
-        python -m pip install --no-deps ../output_gmsh_source .
-
-    - name: Run source compatibility tests
+    - name: Run candidate Gmsh compatibility tests
       if: github.event_name == 'pull_request'
       run: python -m pytest --color no -rA
 
